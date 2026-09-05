@@ -1,0 +1,6 @@
+{
+  "name": "FresherFirst",
+  "description": "A job board exclusively for freshers and entry-level tech roles with an AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
