@@ -61,7 +61,7 @@ export default function ManageApplicants() {
     try {
       const { error } = await supabase
         .from('applications')
-        .update({ status: newStatus })
+        .update({ status: newStatus } as any)
         .eq('id', appId);
 
       if (error) throw error;

@@ -31,11 +31,11 @@ export default function PostJob() {
       if (!res.ok) throw new Error('AI generation failed');
       const data = await res.json();
       
-      if (data.title_suggestion) setTitle(data.title_suggestion);
-      if (data.description_intro) setDescription(data.description_intro);
-      if (data.responsibilities) setResponsibilities(data.responsibilities.join('\n'));
-      if (data.requirements) setRequirements(data.requirements.join('\n'));
-      if (data.skills) setSkills(data.skills.join(', '));
+      if ((data as any).title_suggestion) setTitle((data as any).title_suggestion);
+      if ((data as any).description_intro) setDescription((data as any).description_intro);
+      if ((data as any).responsibilities) setResponsibilities((data as any).responsibilities.join('\n'));
+      if ((data as any).requirements) setRequirements((data as any).requirements.join('\n'));
+      if ((data as any).skills) setSkills((data as any).skills.join(', '));
       
       setRoughNotes('');
     } catch (err: any) {
@@ -74,21 +74,21 @@ export default function PostJob() {
       const { data, error } = await supabase.from('jobs').select('*').eq('id', id).single();
       if (error) throw error;
 
-      setTitle(data.title);
-      setDescription(data.description);
-      setResponsibilities(data.responsibilities.join('\n'));
-      setRequirements(data.requirements.join('\n'));
-      setSkills(data.skills_list ? data.skills_list.join(', ') : '');
-      setExperienceMin(data.experience_min);
-      setExperienceMax(data.experience_max);
-      setSalaryMin(data.salary_min?.toString() || '');
-      setSalaryMax(data.salary_max?.toString() || '');
-      setSalaryPeriod(data.salary_period || 'yearly');
-      setJobType(data.job_type);
-      setWorkMode(data.work_mode);
-      setOpenings(data.openings);
-      setFresherEligible(data.fresher_eligible);
-      setStatus(data.status);
+      setTitle((data as any).title);
+      setDescription((data as any).description);
+      setResponsibilities((data as any).responsibilities.join('\n'));
+      setRequirements((data as any).requirements.join('\n'));
+      setSkills((data as any).skills_list ? (data as any).skills_list.join(', ') : '');
+      setExperienceMin((data as any).experience_min);
+      setExperienceMax((data as any).experience_max);
+      setSalaryMin((data as any).salary_min?.toString() || '');
+      setSalaryMax((data as any).salary_max?.toString() || '');
+      setSalaryPeriod((data as any).salary_period || 'yearly');
+      setJobType((data as any).job_type);
+      setWorkMode((data as any).work_mode);
+      setOpenings((data as any).openings);
+      setFresherEligible((data as any).fresher_eligible);
+      setStatus((data as any).status);
     } catch (err: any) {
       setError(err.message || 'Failed to load job');
     } finally {
@@ -108,11 +108,11 @@ export default function PostJob() {
         .eq('profile_id', user!.id)
         .single();
 
-      if (empError || !empData?.company_id) {
+      if (empError || !(empData as any)?.company_id) {
         throw new Error("Company profile not found. Please complete your company setup first.");
       }
 
-      const companyId = empData.company_id;
+      const companyId = (empData as any).company_id;
 
       // Validation
       if (!title || !description) {
@@ -144,10 +144,10 @@ export default function PostJob() {
       };
 
       if (isEditing) {
-        const { error: updateError } = await supabase.from('jobs').update(jobData).eq('id', id);
+        const { error: updateError } = await supabase.from('jobs').update(jobData as any).eq('id', id);
         if (updateError) throw updateError;
       } else {
-        const { error: insertError } = await supabase.from('jobs').insert(jobData);
+        const { error: insertError } = await supabase.from('jobs').insert(jobData as any);
         if (insertError) throw insertError;
       }
 
@@ -164,7 +164,7 @@ export default function PostJob() {
     
     setSaving(true);
     try {
-      const { error } = await supabase.from('jobs').update({ status: newStatus }).eq('id', id);
+      const { error } = await supabase.from('jobs').update({ status: newStatus } as any).eq('id', id);
       if (error) throw error;
       setStatus(newStatus);
     } catch (err: any) {

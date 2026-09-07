@@ -54,7 +54,7 @@ export default function NotificationCenter() {
 
       if (error) throw error;
       setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+      setUnreadCount(data?.filter((n: any) => !n.is_read).length || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -62,7 +62,7 @@ export default function NotificationCenter() {
 
   const markAsRead = async (id: string) => {
     try {
-      await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+      await supabase.from('notifications').update({ is_read: true } as any).eq('id', id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
@@ -75,7 +75,7 @@ export default function NotificationCenter() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('read', false);
+      await supabase.from('notifications').update({ is_read: true } as any).eq('user_id', user.id).eq('read', false);
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {

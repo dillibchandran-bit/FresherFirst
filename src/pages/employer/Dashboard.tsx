@@ -36,17 +36,17 @@ export default function EmployerDashboard() {
         .from('employer_profiles')
         .select('*')
         .eq('profile_id', user!.id)
-        .single();
+        .maybeSingle();
       
       setEmployerData(empData);
 
-      if (empData?.company_id) {
+      if ((empData as any)?.company_id) {
         // 2. Get company
         const { data: compData } = await supabase
           .from('companies')
           .select('*')
-          .eq('id', empData.company_id)
-          .single();
+          .eq('id', (empData as any).company_id)
+          .maybeSingle();
         
         setCompany(compData);
 
@@ -57,7 +57,7 @@ export default function EmployerDashboard() {
             *,
             applications ( count )
           `)
-          .eq('company_id', empData.company_id)
+          .eq('company_id', (empData as any).company_id)
           .order('created_at', { ascending: false });
         
         if (jobsData) {
@@ -92,15 +92,15 @@ export default function EmployerDashboard() {
         .insert({
           name: setupCompanyName,
           slug: slug,
-        })
+        } as any).select().single()
         .select()
-        .single();
+        .maybeSingle();
         
       if (companyError) throw companyError;
 
       const { error: updateError } = await supabase
         .from('employer_profiles')
-        .update({ company_id: newCompany.id })
+        .update({ company_id: (newCompany as any).id } as any)
         .eq('profile_id', user!.id);
         
       if (updateError) throw updateError;
@@ -118,7 +118,7 @@ export default function EmployerDashboard() {
   
   const handleRequestVerification = async () => {
     if (confirm('Request verification for your company? Our team will review your profile.')) {
-      await supabase.from('companies').update({ verification_status: 'pending' }).eq('id', company.id);
+      await supabase.from('companies').update({ verification_status: 'pending' } as any).eq('id', company.id);
       window.location.reload();
     }
   };

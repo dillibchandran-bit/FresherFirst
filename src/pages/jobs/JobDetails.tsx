@@ -54,7 +54,7 @@ export default function JobDetails() {
         `)
         .eq('slug', slug)
         .eq('status', 'published')
-        .single();
+        .maybeSingle();
 
       if (error) {
         if (error.code === '23505') throw new Error("You have already reported this job.");
@@ -62,13 +62,13 @@ export default function JobDetails() {
       }
       setJob(data as unknown as JobWithDetails);
 
-      if (data.category_id) {
+      if ((data as any).category_id) {
         const { data: similar } = await supabase
           .from('jobs')
           .select(`*, company:companies(*), location:locations(*)`)
-          .eq('category_id', data.category_id)
+          .eq('category_id', (data as any).category_id)
           .eq('status', 'published')
-          .neq('id', data.id)
+          .neq('id', (data as any).id)
           .limit(3);
         
         if (similar) setSimilarJobs(similar as unknown as JobWithDetails[]);
@@ -91,10 +91,10 @@ export default function JobDetails() {
     setReporting(true);
     try {
       const { error } = await supabase.from('job_reports').insert({
-        job_id: job!.id,
-        reporter_id: user.id,
+        job_id: job!.id as any,
+        reporter_id: user!.id,
         reason: reportReason
-      });
+      } as any);
       if (error) throw error;
       setReported(true);
       setShowReportModal(false);
@@ -112,8 +112,8 @@ export default function JobDetails() {
       .from('applications')
       .select('id')
       .eq('job_id', job.id)
-      .eq('candidate_id', user.id)
-      .single();
+      .eq('candidate_id', user!.id)
+      .maybeSingle();
     
     if (data) setHasApplied(true);
   };
@@ -129,10 +129,10 @@ export default function JobDetails() {
     }
     
     // Fetch resumes
-    const { data } = await supabase.from('resumes').select('*').eq('candidate_id', user.id);
-    if (data && data.length > 0) {
+    const { data } = await supabase.from('resumes').select('*').eq('candidate_id', user!.id);
+    if (data && (data as any).length > 0) {
       setResumes(data);
-      const primary = data.find(r => r.is_primary);
+      const primary = (data as any).find(r => (r as any).is_primary);
       if (primary) setSelectedResumeId(primary.id);
       else setSelectedResumeId(data[0].id);
     }
@@ -148,9 +148,9 @@ export default function JobDetails() {
     try {
       const { error } = await supabase.from('applications').insert({
         job_id: job!.id,
-        candidate_id: user!.id,
-        resume_id: selectedResumeId || null,
-        cover_letter: coverLetter.trim() || null,
+        candidate_id: user!.id as any,
+        resume_id: selectedResumeId || null as any,
+        cover_letter: coverLetter.trim() || null as any,
         status: 'applied'
       });
 
@@ -531,11 +531,11 @@ export default function JobDetails() {
                 {resumes.length > 0 ? (
                   <div className="space-y-2">
                     {resumes.map(r => (
-                      <label key={r.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedResumeId === r.id ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:bg-gray-50'}`}>
-                        <input type="radio" name="resume" checked={selectedResumeId === r.id} onChange={() => setSelectedResumeId(r.id)} className="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300" />
-                        <FileText className={`w-5 h-5 ${selectedResumeId === r.id ? 'text-amber-600' : 'text-gray-400'}`} />
-                        <span className={`text-sm font-medium ${selectedResumeId === r.id ? 'text-amber-900' : 'text-gray-700'}`}>
-                          {r.file_url.split('/').pop()} {r.is_primary && <span className="ml-2 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">Primary</span>}
+                      <label key={(r as any).id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedResumeId === (r as any).id ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                        <input type="radio" name="resume" checked={selectedResumeId === (r as any).id} onChange={() => setSelectedResumeId((r as any).id)} className="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300" />
+                        <FileText className={`w-5 h-5 ${selectedResumeId === (r as any).id ? 'text-amber-600' : 'text-gray-400'}`} />
+                        <span className={`text-sm font-medium ${selectedResumeId === (r as any).id ? 'text-amber-900' : 'text-gray-700'}`}>
+                          {r.file_url.split('/').pop()} {(r as any).is_primary && <span className="ml-2 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">Primary</span>}
                         </span>
                       </label>
                     ))}

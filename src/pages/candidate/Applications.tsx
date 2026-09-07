@@ -47,7 +47,7 @@ export default function CandidateApplications() {
     try {
       const { error } = await supabase
         .from('applications')
-        .update({ status: 'withdrawn' })
+        .update({ status: 'withdrawn' } as any)
         .eq('id', appId)
         .eq('candidate_id', user!.id);
 

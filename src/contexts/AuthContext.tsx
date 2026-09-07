@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       
-      if (data && data.status === 'suspended') {
+      if (data && (data as any).status === 'suspended') {
         await supabase.auth.signOut();
         setUser(null);
         setProfile(null);

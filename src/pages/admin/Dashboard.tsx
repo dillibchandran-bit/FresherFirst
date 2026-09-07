@@ -43,7 +43,7 @@ export default function AdminDashboard() {
 
   const logAdminAction = async (action: string, target_type: string, target_id: string, details: any = {}) => {
     try {
-      await supabase.rpc('log_admin_action', {
+      await supabase.rpc('log_admin_action' as any, {
         p_admin_id: user!.id,
         p_action: action,
         p_target_type: target_type,
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
 
   
   const handleUpdateCompanyStatus = async (id: string, status: string) => {
-    await supabase.from('companies').update({ verification_status: status }).eq('id', id);
+    await supabase.from('companies').update({ verification_status: status } as any).eq('id', id);
     logAdminAction(`company_status_${status}`, 'company', id);
     fetchCompanies();
     fetchMetrics();
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
 
 
   const handleUpdateJobStatus = async (id: string, status: string) => {
-    await supabase.from('jobs').update({ status }).eq('id', id);
+    await supabase.from('jobs').update({ status } as any).eq('id', id);
     logAdminAction(`updated_job_status_${status}`, 'job', id);
     fetchJobs();
     fetchMetrics();
@@ -146,13 +146,13 @@ export default function AdminDashboard() {
 
   const handleToggleProfileStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
-    await supabase.from('profiles').update({ status: newStatus }).eq('id', id);
+    await supabase.from('profiles').update({ status: newStatus } as any).eq('id', id);
     logAdminAction(`${newStatus}_profile`, 'profile', id);
     fetchCandidates();
   };
 
   const handleResolveReport = async (id: string, status: string) => {
-    await supabase.from('job_reports').update({ status }).eq('id', id);
+    await supabase.from('job_reports').update({ status } as any).eq('id', id);
     logAdminAction(`resolved_report_${status}`, 'job_report', id);
     fetchReports();
     fetchMetrics();
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
     const name = prompt('Enter new category name:');
     if (!name) return;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    await supabase.from('job_categories').insert({ name, slug });
+    await supabase.from('job_categories').insert({ name, slug } as any);
     logAdminAction('created_category', 'category', slug);
     fetchConfig();
   };
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
     const name = prompt('Enter new location name:');
     if (!name) return;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    await supabase.from('locations').insert({ name, slug });
+    await supabase.from('locations').insert({ name, slug } as any);
     logAdminAction('created_location', 'location', slug);
     fetchConfig();
   };

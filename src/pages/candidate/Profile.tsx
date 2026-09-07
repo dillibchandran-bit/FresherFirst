@@ -110,7 +110,7 @@ export default function CandidateProfile() {
     setSaving(true);
     try {
       // Update public profile name
-      await supabase.from('profiles').update({ full_name: fullName }).eq('id', user!.id);
+      await supabase.from('profiles').update({ full_name: fullName } as any).eq('id', user!.id);
       
       // Update candidate profile
       const { error } = await supabase.from('candidate_profiles')
@@ -122,7 +122,7 @@ export default function CandidateProfile() {
           expected_salary: candidateData.expected_salary,
           github_url: candidateData.github_url,
           linkedin_url: candidateData.linkedin_url,
-        })
+        } as any)
         .eq('profile_id', user!.id);
       
       if (error) throw error;
@@ -171,7 +171,7 @@ export default function CandidateProfile() {
         candidate_id: user!.id,
         file_url: fileName,
         is_primary: resumes.length === 0
-      }).select().single();
+      } as any).select().single();
 
       if (dbError) throw dbError;
       
@@ -202,7 +202,7 @@ export default function CandidateProfile() {
       // create a signed url valid for 60 seconds
       const { data, error } = await supabase.storage.from('resumes').createSignedUrl(fileUrl, 60);
       if (error) throw error;
-      window.open(data.signedUrl, '_blank');
+      window.open((data as any).signedUrl, '_blank');
     } catch (error) {
       console.error(error);
     }
