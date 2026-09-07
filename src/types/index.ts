@@ -90,6 +90,18 @@ export interface Company {
   updated_at: string;
 }
 
+export interface Location {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface Job {
   id: string;
   company_id: string;
@@ -116,6 +128,12 @@ export interface Job {
   posted_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface JobWithDetails extends Job {
+  company: Company;
+  location?: Location;
+  category?: Category;
 }
 
 export interface Application {

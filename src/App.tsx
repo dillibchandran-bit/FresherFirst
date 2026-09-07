@@ -21,9 +21,11 @@ import EmployerDashboard from './pages/employer/Dashboard';
 import PostJob from './pages/employer/PostJob';
 import AdminDashboard from './pages/admin/Dashboard';
 
+// Public Jobs / Companies
+import JobList from './pages/jobs/JobList';
+import JobDetails from './pages/jobs/JobDetails';
+
 // Placeholder components
-const Jobs = () => <div className="min-h-screen py-20 text-center"><h1 className="text-3xl font-bold">Jobs Page</h1></div>;
-const JobDetails = () => <div className="min-h-screen py-20 text-center"><h1 className="text-3xl font-bold">Job Details</h1></div>;
 const Companies = () => <div className="min-h-screen py-20 text-center"><h1 className="text-3xl font-bold">Companies</h1></div>;
 
 export default function App() {
@@ -44,10 +46,10 @@ export default function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Public Jobs / Companies */}
-              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/jobs" element={<JobList />} />
               <Route path="/jobs/:slug" element={<JobDetails />} />
-              <Route path="/jobs/freshers" element={<Jobs />} />
-              <Route path="/locations/:location" element={<Jobs />} />
+              <Route path="/jobs/freshers" element={<JobList />} />
+              <Route path="/locations/:location" element={<JobList />} />
               <Route path="/companies" element={<Companies />} />
               <Route path="/companies/:slug" element={<Companies />} />
               
