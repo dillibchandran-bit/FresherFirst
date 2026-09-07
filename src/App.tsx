@@ -14,10 +14,11 @@ import RegisterEmployer from './pages/auth/RegisterEmployer';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 
-// Dashboards
+// Dashboards & Profiles
 import CandidateDashboard from './pages/candidate/Dashboard';
 import CandidateProfile from './pages/candidate/Profile';
 import EmployerDashboard from './pages/employer/Dashboard';
+import PostJob from './pages/employer/PostJob';
 import AdminDashboard from './pages/admin/Dashboard';
 
 // Placeholder components
@@ -50,9 +51,6 @@ export default function App() {
               <Route path="/companies" element={<Companies />} />
               <Route path="/companies/:slug" element={<Companies />} />
               
-              {/* Legacy Employer Route Redirect */}
-              <Route path="/employer/post-job" element={<Navigate to="/employer/register" replace />} />
-              
               {/* Protected Candidate Routes */}
               <Route 
                 path="/candidate/dashboard" 
@@ -77,6 +75,22 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['employer']}>
                     <EmployerDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/post-job" 
+                element={
+                  <ProtectedRoute allowedRoles={['employer']}>
+                    <PostJob />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/jobs/:id/edit" 
+                element={
+                  <ProtectedRoute allowedRoles={['employer']}>
+                    <PostJob />
                   </ProtectedRoute>
                 } 
               />

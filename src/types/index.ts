@@ -1,5 +1,5 @@
 export type UserRole = 'candidate' | 'employer' | 'admin';
-export type JobStatus = 'pending' | 'published' | 'closed' | 'rejected';
+export type JobStatus = 'draft' | 'pending' | 'published' | 'closed' | 'rejected';
 export type WorkMode = 'on_site' | 'hybrid' | 'remote';
 export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship';
 export type ApplicationStatus = 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
@@ -28,6 +28,14 @@ export interface CandidateProfile {
   preferred_roles: string[] | null;
   work_mode: WorkMode | null;
   expected_salary: number | null;
+}
+
+export interface EmployerProfile {
+  profile_id: string;
+  company_id: string | null;
+  position_in_company: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Education {
@@ -92,10 +100,12 @@ export interface Job {
   description: string;
   responsibilities: string[];
   requirements: string[];
+  skills_list: string[];
   experience_min: number;
   experience_max: number;
   salary_min: number | null;
   salary_max: number | null;
+  salary_period: string;
   job_type: JobType;
   work_mode: WorkMode;
   education_requirements: string | null;

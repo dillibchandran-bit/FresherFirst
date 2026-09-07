@@ -1,4 +1,4 @@
-import { Job, Company, Profile, Application, CandidateProfile, Education, Experience, Project, Resume } from './index';
+import { Job, Company, Profile, Application, CandidateProfile, EmployerProfile, Education, Experience, Project, Resume } from './index';
 
 export type Json =
   | string
@@ -20,6 +20,11 @@ export interface Database {
         Row: CandidateProfile;
         Insert: CandidateProfile;
         Update: Partial<Omit<CandidateProfile, 'profile_id'>>;
+      };
+      employer_profiles: {
+        Row: EmployerProfile;
+        Insert: Omit<EmployerProfile, 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<EmployerProfile, 'profile_id' | 'created_at'>>;
       };
       education: {
         Row: Education;
@@ -48,7 +53,7 @@ export interface Database {
       };
       jobs: {
         Row: Job;
-        Insert: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'posted_at' | 'status'>;
+        Insert: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'posted_at' | 'status'> & { status?: Job['status'] };
         Update: Partial<Omit<Job, 'id' | 'created_at'>>;
       };
       applications: {
@@ -65,7 +70,7 @@ export interface Database {
     };
     Enums: {
       user_role: 'candidate' | 'employer' | 'admin';
-      job_status: 'pending' | 'published' | 'closed' | 'rejected';
+      job_status: 'draft' | 'pending' | 'published' | 'closed' | 'rejected';
       work_mode: 'on_site' | 'hybrid' | 'remote';
       job_type: 'full_time' | 'part_time' | 'contract' | 'internship';
       application_status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
