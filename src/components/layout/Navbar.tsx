@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import NotificationCenter from './NotificationCenter';
 import { Briefcase, Menu, X, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -32,10 +33,13 @@ export default function Navbar() {
             <Link to="/companies" className="text-gray-600 hover:text-amber-600 font-medium transition-colors">Companies</Link>
             <div className="flex items-center gap-4 border-l border-gray-200 pl-8">
               {user ? (
-                <Link to={getDashboardLink()} className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors border border-gray-200">
-                  <User className="w-4 h-4" />
-                  Dashboard
-                </Link>
+                <>
+                  <NotificationCenter />
+                  <Link to={getDashboardLink()} className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors border border-gray-200">
+                    <User className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link to="/login" className="text-gray-900 hover:text-amber-600 font-medium transition-colors">Log in</Link>
@@ -47,7 +51,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center md:hidden">
+          <div className="flex items-center md:hidden gap-2">
+            {user && <NotificationCenter />}
             <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 hover:text-gray-900">
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

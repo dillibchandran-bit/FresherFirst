@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { Suspense } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -15,13 +16,13 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 
 // Dashboards & Profiles
-import CandidateDashboard from './pages/candidate/Dashboard';
-import CandidateProfile from './pages/candidate/Profile';
-import CandidateApplications from './pages/candidate/Applications';
-import EmployerDashboard from './pages/employer/Dashboard';
-import ManageApplicants from './pages/employer/ManageApplicants';
-import PostJob from './pages/employer/PostJob';
-import AdminDashboard from './pages/admin/Dashboard';
+const CandidateDashboard = React.lazy(() => import('./pages/candidate/Dashboard'));
+const CandidateProfile = React.lazy(() => import('./pages/candidate/Profile'));
+const CandidateApplications = React.lazy(() => import('./pages/candidate/Applications'));
+const EmployerDashboard = React.lazy(() => import('./pages/employer/Dashboard'));
+const ManageApplicants = React.lazy(() => import('./pages/employer/ManageApplicants'));
+const PostJob = React.lazy(() => import('./pages/employer/PostJob'));
+const AdminDashboard = React.lazy(() => import('./pages/admin/Dashboard'));
 
 // Public Jobs / Companies
 import JobList from './pages/jobs/JobList';
@@ -32,11 +33,13 @@ const Companies = () => <div className="min-h-screen py-20 text-center"><h1 clas
 
 export default function App() {
   return (
+    <HelmetProvider>
     <AuthProvider>
       <BrowserRouter>
         <div className="flex flex-col min-h-screen font-sans">
           <Navbar />
           <main className="flex-grow">
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Loading...</div>}>
             <Routes>
               <Route path="/" element={<Home />} />
               
@@ -126,10 +129,12 @@ export default function App() {
               />
               
             </Routes>
+            </Suspense>
           </main>
           <Footer />
         </div>
       </BrowserRouter>
     </AuthProvider>
+    </HelmetProvider>
   );
 }

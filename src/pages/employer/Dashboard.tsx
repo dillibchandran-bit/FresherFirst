@@ -115,6 +115,13 @@ export default function EmployerDashboard() {
     }
   };
 
+  
+  const handleRequestVerification = async () => {
+    if (confirm('Request verification for your company? Our team will review your profile.')) {
+      await supabase.from('companies').update({ verification_status: 'pending' }).eq('id', company.id);
+      window.location.reload();
+    }
+  };
   const handleLogout = async () => {
     await signOut();
     navigate('/');
@@ -167,10 +174,13 @@ export default function EmployerDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Employer Portal</h1>
           <p className="text-gray-600 mt-1 flex items-center gap-2">
             {company.name} 
-            {company.verified ? 
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full"><CheckCircle2 className="w-3 h-3"/> Verified</span> : 
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full"><Clock className="w-3 h-3"/> Pending Verification</span>
-            }
+            
+            {company.verification_status === 'verified' && <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full"><CheckCircle2 className="w-3 h-3"/> Verified</span>}
+            {company.verification_status === 'pending' && <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full"><Clock className="w-3 h-3"/> Verification Pending</span>}
+            {company.verification_status === 'rejected' && <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full">Verification Rejected</span>}
+            {company.verification_status === 'suspended' && <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full">Suspended</span>}
+            {(!company.verification_status || company.verification_status === 'unverified') && <button onClick={handleRequestVerification} className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded-full cursor-pointer transition-colors">Unverified - Request Verification</button>}
+
           </p>
         </div>
         <div className="flex gap-4">

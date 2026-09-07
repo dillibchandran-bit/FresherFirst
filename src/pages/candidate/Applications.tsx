@@ -120,7 +120,7 @@ export default function CandidateApplications() {
                     
                     <div className="flex items-start gap-4">
                       {app.job.company.logo_url ? (
-                        <img src={app.job.company.logo_url} className="w-12 h-12 rounded bg-white border border-gray-100 p-1 object-contain" />
+                        <img loading="lazy" src={app.job.company.logo_url} className="w-12 h-12 rounded bg-white border border-gray-100 p-1 object-contain" />
                       ) : (
                         <div className="w-12 h-12 rounded bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
                           <Building2 className="w-6 h-6 text-gray-400" />

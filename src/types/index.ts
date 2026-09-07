@@ -86,6 +86,7 @@ export interface Company {
   logo_url: string | null;
   description: string | null;
   verified: boolean;
+  verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | 'suspended';
   created_at: string;
   updated_at: string;
 }
@@ -145,4 +146,42 @@ export interface Application {
   status: ApplicationStatus;
   applied_at: string;
   updated_at: string;
+}
+
+export interface JobReport {
+  id: string;
+  job_id: string;
+  reporter_id?: string;
+  reason: string;
+  status: 'pending' | 'reviewed' | 'resolved';
+  created_at: string;
+  updated_at: string;
+  job?: Job;
+  reporter?: Profile;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  admin_id: string;
+  action: string;
+  target_type: string;
+  target_id?: string;
+  details?: any;
+  created_at: string;
+  admin?: Profile;
+}
+
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  link?: string;
+  reference_id?: string;
+  reference_type?: string;
+  channels?: string[];
+  created_at: string;
 }

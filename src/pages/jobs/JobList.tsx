@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useParams } from 'react-router-dom';
+import SEO from '../../components/layout/SEO';
 import { supabase } from '../../lib/supabase';
 import { JobWithDetails, Location, Category } from '../../types';
 import JobCard from '../../components/jobs/JobCard';
@@ -7,6 +8,27 @@ import { Search, MapPin, Filter, X, Loader2, Briefcase } from 'lucide-react';
 
 export default function JobList() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const locationPath = useLocation();
+  const { location: locationParam } = useParams();
+  
+  let pageTitle = "Entry Level Jobs & Internships | Fresher First";
+  let pageDescription = "Search thousands of verified entry-level jobs and internships for freshers.";
+  let canonicalUrl = "/jobs";
+  let displayTitle = "Find Your First Tech Job";
+
+  if (locationPath.pathname.includes('/jobs/freshers')) {
+    pageTitle = "Fresher Jobs & Walk-ins | Fresher First";
+    pageDescription = "Apply to the latest fresher jobs and walk-ins. Verified employers hiring entry-level candidates.";
+    canonicalUrl = "/jobs/freshers";
+    displayTitle = "Fresher Jobs & Walk-ins";
+  } else if (locationPath.pathname.includes('/locations/')) {
+    const locName = locationParam ? locationParam.charAt(0).toUpperCase() + locationParam.slice(1).replace('-', ' ') : 'India';
+    pageTitle = `Jobs in ${locName} | Fresher First`;
+    pageDescription = `Search jobs and internships in ${locName}. Discover opportunities from verified employers.`;
+    canonicalUrl = `/locations/${locationParam}`;
+    displayTitle = `Jobs in ${locName}`;
+  }
+
   
   // URL Params
   const query = searchParams.get('q') || '';
@@ -28,6 +50,26 @@ export default function JobList() {
   // Filter Options Data
   const [locations, setLocations] = useState<Location[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  
+  useEffect(() => {
+    if (locationParam && locations.length > 0) {
+      const matchedLoc = locations.find(l => l.slug === locationParam);
+      if (matchedLoc && locId !== matchedLoc.id) {
+         const newParams = new URLSearchParams(searchParams);
+         newParams.set('location', matchedLoc.id);
+         setSearchParams(newParams);
+      }
+    }
+  }, [locationParam, locations]);
+
+  useEffect(() => {
+    if (locationPath.pathname === '/jobs/freshers' && !fresherOnly) {
+       const newParams = new URLSearchParams(searchParams);
+       newParams.set('fresher', 'true');
+       setSearchParams(newParams);
+    }
+  }, [locationPath.pathname]);
 
   useEffect(() => {
     fetchFilterOptions();
@@ -108,14 +150,36 @@ export default function JobList() {
     setSearchParams(newParams);
   };
 
+  
+  const getLocationContent = () => {
+    if (!locationParam) return null;
+    const loc = locationParam.toLowerCase();
+    const chennaiHubs = ['omr', 'sholinganallur', 'navalur', 'siruseri', 'kelambakkam', 'chennai'];
+    
+    if (chennaiHubs.includes(loc)) {
+      return (
+        <div className="bg-amber-50 border border-amber-100 rounded-xl p-6 mb-8 text-amber-900">
+          <h2 className="text-lg font-bold mb-2">Tech Opportunities in {loc.charAt(0).toUpperCase() + loc.slice(1)}</h2>
+          <p className="text-sm leading-relaxed">
+            As a key part of Chennai's IT corridor, {loc.charAt(0).toUpperCase() + loc.slice(1)} hosts a dense cluster of tech parks and corporate campuses. 
+            We partner directly with companies in this zone to bring you verified entry-level roles and internships. 
+            Whether you're looking for software development, testing, or analytics roles, this hub offers excellent infrastructure and career growth for fresh graduates.
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const totalPages = Math.ceil(totalJobs / JOBS_PER_PAGE);
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">
+      <SEO title={pageTitle} description={pageDescription} canonicalUrl={canonicalUrl} />
       {/* Search Header */}
       <div className="bg-white border-b border-gray-200 py-10 px-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Find Your First Tech Job</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">{displayTitle}</h1>
           <div className="flex flex-col md:flex-row gap-3 max-w-4xl mx-auto">
             <div className="relative flex-grow">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

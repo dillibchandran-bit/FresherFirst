@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { JobWithDetails, Resume } from '../../types';
-import { MapPin, Briefcase, IndianRupee, Clock, CheckCircle2, GraduationCap, Building2, Flag, AlertCircle, ArrowLeft, X, FileText, Loader2 } from 'lucide-react';
+import { MapPin, Briefcase, IndianRupee, Clock, CheckCircle2, GraduationCap, Building2, Flag, AlertCircle, ArrowLeft, X, FileText, Loader2, ShieldCheck, Award, History, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -23,6 +23,10 @@ export default function JobDetails() {
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   const [coverLetter, setCoverLetter] = useState('');
   const [applying, setApplying] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reporting, setReporting] = useState(false);
+  const [reported, setReported] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,7 +56,10 @@ export default function JobDetails() {
         .eq('status', 'published')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') throw new Error("You have already reported this job.");
+        throw error;
+      }
       setJob(data as unknown as JobWithDetails);
 
       if (data.category_id) {
@@ -71,6 +78,31 @@ export default function JobDetails() {
       setError("We couldn't find this job. It may have been closed or removed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  
+  const submitReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setReporting(true);
+    try {
+      const { error } = await supabase.from('job_reports').insert({
+        job_id: job!.id,
+        reporter_id: user.id,
+        reason: reportReason
+      });
+      if (error) throw error;
+      setReported(true);
+      setShowReportModal(false);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Failed to submit report.');
+    } finally {
+      setReporting(false);
     }
   };
 
@@ -136,6 +168,63 @@ export default function JobDetails() {
     }
   };
 
+  
+  const jobSchema = job ? {
+    "@context": "https://schema.org/",
+    "@type": "JobPosting",
+    "title": job.title,
+    "description": job.description,
+    "identifier": {
+      "@type": "PropertyValue",
+      "name": job.company?.name || "Unknown Company",
+      "value": job.id
+    },
+    "datePosted": job.posted_at,
+    "validThrough": new Date(new Date(job.posted_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    "employmentType": job.work_mode === 'remote' ? 'TELECOMMUTE' : 'FULL_TIME',
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": job.company?.name || "Unknown Company",
+      "sameAs": job.company?.website || ""
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": job.location?.name || "India",
+        "addressCountry": "IN"
+      }
+    },
+    ...(job.salary_min && job.salary_max ? {
+      "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "INR",
+        "value": {
+          "@type": "QuantitativeValue",
+          "minValue": job.salary_min,
+          "maxValue": job.salary_max,
+          "unitText": "YEAR"
+        }
+      }
+    } : {})
+  } : undefined;
+
+  const breadcrumbs = job ? (
+    <nav className="flex items-center text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+      <Link to="/" className="hover:text-amber-600 transition-colors">Home</Link>
+      <ChevronRight className="w-4 h-4 mx-2" />
+      <Link to="/jobs" className="hover:text-amber-600 transition-colors">Jobs</Link>
+      <ChevronRight className="w-4 h-4 mx-2" />
+      {job.category && (
+         <>
+           <Link to={`/jobs?category=${job.category_id}`} className="hover:text-amber-600 transition-colors">{job.category.name}</Link>
+           <ChevronRight className="w-4 h-4 mx-2" />
+         </>
+      )}
+      <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-md">{job.title}</span>
+    </nav>
+  ) : null;
+
   if (loading) return <div className="min-h-screen flex justify-center py-20"><div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>;
   if (error || !job) return (
     <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
@@ -147,6 +236,12 @@ export default function JobDetails() {
       </Link>
     </div>
   );
+
+  
+  const isRecentlyPosted = job?.posted_at ? (new Date().getTime() - new Date(job.posted_at).getTime()) < 3 * 24 * 60 * 60 * 1000 : true;
+  const isSalaryDisclosed = !!(job?.salary_min || job?.salary_max);
+  const isVerified = job?.company.verification_status === 'verified';
+
 
   const formatSalary = (min: number | null, max: number | null) => {
     if (!min && !max) return 'Not disclosed';
@@ -167,7 +262,7 @@ export default function JobDetails() {
           <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between">
             <div className="flex gap-6 items-start">
               {job.company.logo_url ? (
-                <img src={job.company.logo_url} alt={job.company.name} className="w-20 h-20 rounded-xl object-contain bg-white border border-gray-100 shadow-sm p-1" />
+                <img loading="lazy" src={job.company.logo_url} alt={job.company.name} className="w-20 h-20 rounded-xl object-contain bg-white border border-gray-100 shadow-sm p-1" />
               ) : (
                 <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center border border-gray-200 flex-shrink-0">
                   <Building2 className="w-8 h-8 text-gray-400" />
@@ -179,7 +274,7 @@ export default function JobDetails() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-gray-600">
                   <span className="font-medium text-lg flex items-center gap-1 text-gray-900">
                     {job.company.name}
-                    {job.company.verified && <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" title="Verified Company" />}
+                    {job.company.verification_status === 'verified' && <span title="Verified Company"><CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" /></span>}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-gray-400" />
@@ -190,11 +285,35 @@ export default function JobDetails() {
                     <span>Posted {job.posted_at ? formatDistanceToNow(new Date(job.posted_at), { addSuffix: true }) : 'Recently'}</span>
                   </div>
                 </div>
-                {job.fresher_eligible && (
-                  <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 text-sm font-semibold rounded-full border border-green-200">
-                    <GraduationCap className="w-4 h-4" /> Fresher Friendly
-                  </div>
-                )}
+                
+                <div className="flex flex-wrap items-center gap-2 mt-4 text-sm font-medium">
+                  {isVerified && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200" title="This employer has passed our verification process">
+                      <ShieldCheck className="w-4 h-4" /> Verified Employer
+                    </div>
+                  )}
+                  {isVerified && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
+                      <Award className="w-4 h-4" /> Verified Job
+                    </div>
+                  )}
+                  {job.fresher_eligible && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-200">
+                      <GraduationCap className="w-4 h-4" /> Freshers Welcome
+                    </div>
+                  )}
+                  {isSalaryDisclosed && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+                      <IndianRupee className="w-4 h-4" /> Salary Disclosed
+                    </div>
+                  )}
+                  {isRecentlyPosted && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-200">
+                      <History className="w-4 h-4" /> Recently Posted
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
             
@@ -304,11 +423,11 @@ export default function JobDetails() {
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-4 pb-4 border-b border-gray-100">About the Company</h3>
             <div className="flex items-center gap-3 mb-3">
-              {job.company.logo_url && <img src={job.company.logo_url} className="w-10 h-10 rounded border" />}
+              {job.company.logo_url && <img loading="lazy" src={job.company.logo_url} className="w-10 h-10 rounded border" />}
               <div>
                 <div className="font-bold text-gray-900 flex items-center gap-1">
                   {job.company.name}
-                  {job.company.verified && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                  {job.company.verification_status === 'verified' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                 </div>
                 <a href={job.company.website || '#'} target="_blank" rel="noreferrer" className="text-sm text-amber-600 hover:underline">Visit Website</a>
               </div>
@@ -318,8 +437,8 @@ export default function JobDetails() {
             )}
           </div>
 
-          <button className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-800 py-2">
-            <Flag className="w-4 h-4" /> Report this listing
+          <button onClick={() => user ? setShowReportModal(true) : navigate('/login')} disabled={reported} className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-800 py-2 disabled:opacity-50">
+            {reported ? "Reported" : <><Flag className="w-4 h-4" /> Report this listing</>}
           </button>
         </div>
       </div>
@@ -340,6 +459,50 @@ export default function JobDetails() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">Report Listing</h3>
+              <button onClick={() => setShowReportModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={submitReport} className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Why are you reporting this job?</label>
+                <select
+                  required
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg p-3 outline-none border focus:border-gray-900 focus:ring-1 focus:ring-gray-900 mb-4 bg-white"
+                >
+                  <option value="" disabled>Select a reason...</option>
+                  <option value="Fake job">Fake job</option>
+                  <option value="Asking for money">Asking for money</option>
+                  <option value="Misleading information">Misleading information</option>
+                  <option value="Wrong company">Wrong company</option>
+                  <option value="Duplicate job">Duplicate job</option>
+                  <option value="Suspicious recruiter">Suspicious recruiter</option>
+                  <option value="Other">Other</option>
+                </select>
+                <p className="text-xs text-gray-500">Your report will be reviewed by our moderation team. False reporting may lead to account suspension.</p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setShowReportModal(false)} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
+                <button type="submit" disabled={reporting || !reportReason.trim()} className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50">
+                  {reporting ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </div>
+            </form>
+
           </div>
         </div>
       )}

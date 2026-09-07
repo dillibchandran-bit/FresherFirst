@@ -153,7 +153,7 @@ export default function ManageApplicants() {
                 <div className="p-6 md:w-1/3 border-b md:border-b-0 md:border-r border-gray-100 bg-gray-50 flex flex-col items-center text-center">
                   <div className="w-20 h-20 bg-gray-200 rounded-full mb-4 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                     {profile.avatar_url ? (
-                      <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                      <img loading="lazy" src={profile.avatar_url} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-2xl font-bold text-gray-400">{profile.full_name?.charAt(0) || '?'}</span>
                     )}

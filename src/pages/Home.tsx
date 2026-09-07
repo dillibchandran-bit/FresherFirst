@@ -1,4 +1,5 @@
 import React from 'react';
+import SEO from '../components/layout/SEO';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, Code2, Database, ShieldCheck, ChevronRight } from 'lucide-react';
 

@@ -73,7 +73,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      
+      if (data && data.status === 'suspended') {
+        await supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
+        alert('Your account has been suspended by an administrator.');
+        return;
+      }
       setProfile(data as Profile);
+
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
     }
