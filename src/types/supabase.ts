@@ -73,7 +73,7 @@ export interface Database {
       job_status: 'draft' | 'pending' | 'published' | 'closed' | 'rejected';
       work_mode: 'on_site' | 'hybrid' | 'remote';
       job_type: 'full_time' | 'part_time' | 'contract' | 'internship';
-      application_status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
+      application_status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired' | 'applied' | 'under_review' | 'interview' | 'selected' | 'withdrawn';
     };
   };
 }

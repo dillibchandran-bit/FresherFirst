@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut, Building2, Plus, Briefcase, FileText, CheckCircle2, Clock, XCircle, Users } from 'lucide-react';
+import { LogOut, Building2, Plus, Briefcase, FileText, CheckCircle2, Clock, XCircle, Users, Eye } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Company, EmployerProfile, Job } from '../../types';
@@ -12,7 +12,7 @@ export default function EmployerDashboard() {
   const [loading, setLoading] = useState(true);
   const [employerData, setEmployerData] = useState<EmployerProfile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
   const [stats, setStats] = useState({
     active: 0,
     pending: 0,
@@ -50,26 +50,28 @@ export default function EmployerDashboard() {
         
         setCompany(compData);
 
-        // 3. Get jobs
+        // 3. Get jobs and application counts
         const { data: jobsData } = await supabase
           .from('jobs')
-          .select('*')
+          .select(`
+            *,
+            applications ( count )
+          `)
           .eq('company_id', empData.company_id)
           .order('created_at', { ascending: false });
         
         if (jobsData) {
           setJobs(jobsData);
           
-          let active = 0, pending = 0, closed = 0;
-          jobsData.forEach(j => {
+          let active = 0, pending = 0, closed = 0, totalApps = 0;
+          jobsData.forEach((j: any) => {
             if (j.status === 'published') active++;
             if (j.status === 'pending' || j.status === 'draft') pending++;
             if (j.status === 'closed') closed++;
+            totalApps += (j.applications?.[0]?.count || 0);
           });
 
-          // Just a mock or actual fetch for applications. Let's do an actual fetch if possible, 
-          // or just 0 for now since we haven't built candidate applying yet.
-          setStats({ active, pending, closed, applications: 0 });
+          setStats({ active, pending, closed, applications: totalApps });
         }
       }
     } catch (error) {
@@ -229,22 +231,35 @@ export default function EmployerDashboard() {
         ) : (
           <ul className="divide-y divide-gray-200">
             {jobs.map(job => (
-              <li key={job.id} className="p-6 hover:bg-gray-50 transition-colors flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div>
-                  <Link to={`/employer/jobs/${job.id}/edit`} className="text-lg font-bold text-gray-900 hover:text-amber-600 transition-colors">
-                    {job.title}
-                  </Link>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                    <span>{job.job_type.replace('_', ' ')}</span>
+              <li key={job.id} className="p-6 hover:bg-gray-50 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <Link to={`/employer/jobs/${job.id}/edit`} className="text-lg font-bold text-gray-900 hover:text-amber-600 transition-colors">
+                      {job.title}
+                    </Link>
+                    {getStatusBadge(job.status)}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                    <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {job.job_type.replace('_', ' ')}</span>
                     <span>&bull;</span>
-                    <span>{job.work_mode.replace('_', ' ')}</span>
+                    <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> {job.work_mode.replace('_', ' ')}</span>
                     <span>&bull;</span>
-                    <span>Posted {new Date(job.created_at).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> Posted {new Date(job.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  {getStatusBadge(job.status)}
-                  <Link to={`/employer/jobs/${job.id}/edit`} className="text-sm font-medium text-gray-600 hover:text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg">
+                
+                <div className="flex items-center gap-3">
+                  <Link 
+                    to={`/employer/jobs/${job.id}/applicants`} 
+                    className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <Users className="w-4 h-4" /> 
+                    Applicants ({job.applications?.[0]?.count || 0})
+                  </Link>
+                  <Link 
+                    to={`/employer/jobs/${job.id}/edit`} 
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
+                  >
                     Edit
                   </Link>
                 </div>

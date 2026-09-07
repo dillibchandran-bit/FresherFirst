@@ -17,7 +17,9 @@ import ResetPassword from './pages/auth/ResetPassword';
 // Dashboards & Profiles
 import CandidateDashboard from './pages/candidate/Dashboard';
 import CandidateProfile from './pages/candidate/Profile';
+import CandidateApplications from './pages/candidate/Applications';
 import EmployerDashboard from './pages/employer/Dashboard';
+import ManageApplicants from './pages/employer/ManageApplicants';
 import PostJob from './pages/employer/PostJob';
 import AdminDashboard from './pages/admin/Dashboard';
 
@@ -70,6 +72,14 @@ export default function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/candidate/applications" 
+                element={
+                  <ProtectedRoute allowedRoles={['candidate']}>
+                    <CandidateApplications />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Protected Employer Routes */}
               <Route 
@@ -93,6 +103,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['employer']}>
                     <PostJob />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/jobs/:id/applicants" 
+                element={
+                  <ProtectedRoute allowedRoles={['employer']}>
+                    <ManageApplicants />
                   </ProtectedRoute>
                 } 
               />

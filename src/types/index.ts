@@ -2,7 +2,7 @@ export type UserRole = 'candidate' | 'employer' | 'admin';
 export type JobStatus = 'draft' | 'pending' | 'published' | 'closed' | 'rejected';
 export type WorkMode = 'on_site' | 'hybrid' | 'remote';
 export type JobType = 'full_time' | 'part_time' | 'contract' | 'internship';
-export type ApplicationStatus = 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired';
+export type ApplicationStatus = 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'hired' | 'applied' | 'under_review' | 'interview' | 'selected' | 'withdrawn';
 export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Profile {

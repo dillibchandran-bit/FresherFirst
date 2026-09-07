@@ -1,21 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { JobWithDetails } from '../../types';
-import { MapPin, Briefcase, IndianRupee, Clock, CheckCircle2, GraduationCap, Building2, Flag, AlertCircle, ArrowLeft } from 'lucide-react';
+import { JobWithDetails, Resume } from '../../types';
+import { MapPin, Briefcase, IndianRupee, Clock, CheckCircle2, GraduationCap, Building2, Flag, AlertCircle, ArrowLeft, X, FileText, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function JobDetails() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  
   const [job, setJob] = useState<JobWithDetails | null>(null);
   const [similarJobs, setSimilarJobs] = useState<JobWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Application State
+  const [hasApplied, setHasApplied] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>('');
+  const [coverLetter, setCoverLetter] = useState('');
+  const [applying, setApplying] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobDetails();
     window.scrollTo(0, 0);
   }, [slug]);
+
+  useEffect(() => {
+    if (user && job && profile?.role === 'candidate') {
+      checkApplicationStatus();
+    }
+  }, [user, job, profile]);
 
   const fetchJobDetails = async () => {
     setLoading(true);
@@ -36,7 +55,6 @@ export default function JobDetails() {
       if (error) throw error;
       setJob(data as unknown as JobWithDetails);
 
-      // Fetch similar jobs (same category, different id)
       if (data.category_id) {
         const { data: similar } = await supabase
           .from('jobs')
@@ -53,6 +71,68 @@ export default function JobDetails() {
       setError("We couldn't find this job. It may have been closed or removed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkApplicationStatus = async () => {
+    if (!user || !job) return;
+    const { data } = await supabase
+      .from('applications')
+      .select('id')
+      .eq('job_id', job.id)
+      .eq('candidate_id', user.id)
+      .single();
+    
+    if (data) setHasApplied(true);
+  };
+
+  const handleApplyClick = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (profile?.role !== 'candidate') {
+      alert("Only candidates can apply to jobs.");
+      return;
+    }
+    
+    // Fetch resumes
+    const { data } = await supabase.from('resumes').select('*').eq('candidate_id', user.id);
+    if (data && data.length > 0) {
+      setResumes(data);
+      const primary = data.find(r => r.is_primary);
+      if (primary) setSelectedResumeId(primary.id);
+      else setSelectedResumeId(data[0].id);
+    }
+    
+    setShowApplyModal(true);
+  };
+
+  const submitApplication = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApplying(true);
+    setApplyError(null);
+
+    try {
+      const { error } = await supabase.from('applications').insert({
+        job_id: job!.id,
+        candidate_id: user!.id,
+        resume_id: selectedResumeId || null,
+        cover_letter: coverLetter.trim() || null,
+        status: 'applied'
+      });
+
+      if (error) {
+        if (error.code === '23505') throw new Error("You have already applied for this job.");
+        throw error;
+      }
+
+      setHasApplied(true);
+      setShowApplyModal(false);
+    } catch (err: any) {
+      setApplyError(err.message || "Failed to submit application. Please try again.");
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -119,9 +199,15 @@ export default function JobDetails() {
             </div>
             
             <div className="flex flex-col gap-3 min-w-[200px]">
-              <button className="w-full bg-amber-500 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-amber-600 transition-colors shadow-sm shadow-amber-500/20">
-                Apply Now
-              </button>
+              {hasApplied ? (
+                <button disabled className="w-full bg-green-50 text-green-700 font-bold py-3.5 px-6 rounded-xl border border-green-200 flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" /> Applied
+                </button>
+              ) : (
+                <button onClick={handleApplyClick} className="w-full bg-amber-500 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-amber-600 transition-colors shadow-sm shadow-amber-500/20">
+                  Apply Now
+                </button>
+              )}
               <button className="w-full bg-white border border-gray-300 text-gray-700 font-medium py-3 px-6 rounded-xl hover:bg-gray-50 transition-colors">
                 Save Job
               </button>
@@ -254,6 +340,75 @@ export default function JobDetails() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Apply Modal */}
+      {showApplyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900">Apply to {job.company.name}</h3>
+              <button onClick={() => setShowApplyModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={submitApplication} className="p-6">
+              {applyError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <p>{applyError}</p>
+                </div>
+              )}
+              
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Select Resume</label>
+                {resumes.length > 0 ? (
+                  <div className="space-y-2">
+                    {resumes.map(r => (
+                      <label key={r.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedResumeId === r.id ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                        <input type="radio" name="resume" checked={selectedResumeId === r.id} onChange={() => setSelectedResumeId(r.id)} className="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300" />
+                        <FileText className={`w-5 h-5 ${selectedResumeId === r.id ? 'text-amber-600' : 'text-gray-400'}`} />
+                        <span className={`text-sm font-medium ${selectedResumeId === r.id ? 'text-amber-900' : 'text-gray-700'}`}>
+                          {r.file_url.split('/').pop()} {r.is_primary && <span className="ml-2 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">Primary</span>}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    You don't have any resumes uploaded. <Link to="/candidate/profile" className="text-amber-600 font-medium hover:underline">Upload a resume in your profile</Link> before applying.
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Cover Note (Optional)</label>
+                <textarea 
+                  rows={4}
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                  placeholder="Introduce yourself and explain why you're a great fit for this role..."
+                  className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm"
+                ></textarea>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setShowApplyModal(false)} className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={applying || (resumes.length === 0)}
+                  className="flex items-center gap-2 bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                >
+                  {applying && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Submit Application
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
