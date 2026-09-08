@@ -92,9 +92,7 @@ export default function EmployerDashboard() {
         .insert({
           name: setupCompanyName,
           slug: slug,
-        } as any).select().single()
-        .select()
-        .maybeSingle();
+        } as any).select().single();
         
       if (companyError) throw companyError;
 
