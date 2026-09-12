@@ -13,7 +13,7 @@ export default function Home() {
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 font-medium text-sm mb-8 border border-amber-100">
               <MapPin className="w-4 h-4" />
-              <span>Focused on Chennai's OMR IT Corridor</span>
+              <span>Focused on Chennai's IT Corridor</span>
             </div>
             
             <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight mb-6 leading-tight">
@@ -22,7 +22,7 @@ export default function Home() {
             </h1>
             
             <p className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto">
-              We connect fresh graduates with top startups and enterprise companies in Sholinganallur, Siruseri, Navalur, and beyond. Zero fake jobs, 100% verified.
+              We connect fresh graduates with top startups and enterprise companies in Chennai and beyond. Zero fake jobs, 100% verified.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
