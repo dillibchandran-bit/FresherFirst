@@ -194,17 +194,17 @@ export default function AdminDashboard() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading admin panel...</div>;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-900 text-white flex flex-col">
-        <div className="p-6">
+      <div className="w-full md:w-64 bg-gray-900 text-white flex flex-col flex-shrink-0">
+        <div className="p-4 md:p-6 flex items-center justify-between md:block">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Shield className="w-6 h-6 text-amber-500" /> Admin
           </h2>
-          <p className="text-gray-400 text-sm mt-1">{profile?.full_name}</p>
+          <p className="text-gray-400 text-sm mt-0.5 hidden md:block">{profile?.full_name}</p>
         </div>
         
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className="flex-1 px-3 md:px-4 py-2 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
           {[
             { id: 'overview', icon: Activity, label: 'Overview' },
             { id: 'jobs', icon: Briefcase, label: 'Jobs' },
@@ -217,14 +217,14 @@ export default function AdminDashboard() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === item.id ? 'bg-amber-500 text-gray-900' : 'text-gray-300 hover:bg-gray-800'}`}
+              className={`flex items-center gap-2 md:gap-3 px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${activeTab === item.id ? 'bg-amber-500 text-gray-900 font-semibold' : 'text-gray-300 hover:bg-gray-800'}`}
             >
-              <item.icon className="w-5 h-5" /> {item.label}
+              <item.icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" /> {item.label}
             </button>
           ))}
         </nav>
         
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-3 md:p-4 border-t border-gray-800 hidden md:block">
           <button onClick={() => { signOut(); navigate('/'); }} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white w-full">
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-8 max-w-6xl mx-auto">
+        <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto">
           
           {/* OVERVIEW */}
           {activeTab === 'overview' && (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { Briefcase, Loader2, AlertCircle } from 'lucide-react';
+import { Briefcase, Loader2, AlertCircle, Shield, Info } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function Login() {
@@ -13,6 +13,10 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useAuth();
+
+  const searchParams = new URLSearchParams(location.search);
+  const isAdminIntent = searchParams.get('role') === 'admin' || (location.state as any)?.from?.pathname?.startsWith('/admin');
+  const infoMessage = (location.state as any)?.message;
 
   // If already logged in, redirect to dashboard
   React.useEffect(() => {
@@ -52,12 +56,40 @@ export default function Login() {
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
         <div className="text-center mb-8">
-          <div className="inline-flex bg-amber-500 p-2 rounded-xl mb-4">
-            <Briefcase className="w-6 h-6 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-          <p className="text-gray-500 mt-2 text-sm">Log in to your Fresher First account</p>
+          {isAdminIntent ? (
+            <div className="inline-flex bg-gray-900 p-2.5 rounded-xl mb-4 text-amber-400">
+              <Shield className="w-6 h-6" />
+            </div>
+          ) : (
+            <div className="inline-flex bg-amber-500 p-2 rounded-xl mb-4">
+              <Briefcase className="w-6 h-6 text-white" />
+            </div>
+          )}
+
+          {isAdminIntent && (
+            <div className="block mb-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                <Shield className="w-3.5 h-3.5 text-amber-600" /> Admin Portal
+              </span>
+            </div>
+          )}
+
+          <h2 className="text-2xl font-bold text-gray-900">
+            {isAdminIntent ? 'Admin Sign In' : 'Welcome back'}
+          </h2>
+          <p className="text-gray-500 mt-2 text-sm">
+            {isAdminIntent 
+              ? 'Sign in with your administrator credentials to access the Admin Dashboard' 
+              : 'Log in to your Fresher First account'}
+          </p>
         </div>
+
+        {infoMessage && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 text-amber-900 text-sm">
+            <Info className="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" />
+            <p>{infoMessage}</p>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex gap-3 text-red-700">

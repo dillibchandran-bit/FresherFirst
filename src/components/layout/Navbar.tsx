@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import NotificationCenter from './NotificationCenter';
-import { Briefcase, Menu, X, User } from 'lucide-react';
+import { Briefcase, Menu, X, User, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function Navbar() {
@@ -35,9 +35,16 @@ export default function Navbar() {
               {user ? (
                 <>
                   <NotificationCenter />
-                  <Link to={getDashboardLink()} className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors border border-gray-200">
-                    <User className="w-4 h-4" />
-                    Dashboard
+                  <Link 
+                    to={getDashboardLink()} 
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors border ${
+                      profile?.role === 'admin'
+                        ? 'bg-amber-500 hover:bg-amber-600 text-gray-950 font-semibold border-amber-600 shadow-sm'
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200'
+                    }`}
+                  >
+                    {profile?.role === 'admin' ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                    {profile?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
                   </Link>
                 </>
               ) : (
@@ -66,7 +73,9 @@ export default function Navbar() {
             <Link to="/jobs" className="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50 rounded-md">Find Jobs</Link>
             <Link to="/companies" className="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50 rounded-md">Companies</Link>
             {user ? (
-              <Link to={getDashboardLink()} className="block px-3 py-2 text-base font-medium text-amber-600 hover:bg-amber-50 rounded-md">Dashboard</Link>
+              <Link to={getDashboardLink()} className="block px-3 py-2 text-base font-medium text-amber-600 hover:bg-amber-50 rounded-md">
+                {profile?.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+              </Link>
             ) : (
               <>
                 <Link to="/login" className="block px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50 rounded-md">Log in</Link>

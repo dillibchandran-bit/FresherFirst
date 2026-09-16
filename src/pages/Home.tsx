@@ -21,8 +21,8 @@ export default function Home() {
               <span className="text-amber-500">starts here.</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto">
-              We connect fresh graduates with top startups and enterprise companies in Chennai and beyond. Zero fake jobs, 100% verified.
+            <p className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">
+              We connect fresh graduates with top startups and enterprise companies in Chennai and beyond. Zero fake jobs, 100% verified. Find Fresher jobs in OMR, Taramani, Perungudi, Kandanchavadi, Karapakkam, Sholinganallur, Navalur, Siruseri, Kelambakkam and Chennai.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
