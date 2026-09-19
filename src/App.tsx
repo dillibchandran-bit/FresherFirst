@@ -23,6 +23,7 @@ const EmployerDashboard = React.lazy(() => import('./pages/employer/Dashboard'))
 const ManageApplicants = React.lazy(() => import('./pages/employer/ManageApplicants'));
 const PostJob = React.lazy(() => import('./pages/employer/PostJob'));
 const AdminDashboard = React.lazy(() => import('./pages/admin/Dashboard'));
+const AdminPostJob = React.lazy(() => import('./pages/admin/AdminPostJob'));
 
 // Public Jobs / Companies
 import JobList from './pages/jobs/JobList';
@@ -131,6 +132,18 @@ export default function App() {
                     <AdminDashboard />
                   </ProtectedRoute>
                 } 
+              />
+              <Route 
+                path="/admin/jobs/create" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminPostJob />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/jobs/post" 
+                element={<Navigate to="/admin/jobs/create" replace />} 
               />
               
             </Routes>

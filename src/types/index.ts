@@ -124,6 +124,7 @@ export interface Job {
   education_requirements: string | null;
   fresher_eligible: boolean;
   deadline: string | null;
+  expires_at?: string | null;
   openings: number;
   status: JobStatus;
   posted_at: string | null;

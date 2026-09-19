@@ -119,7 +119,7 @@ export default function CandidateApplications() {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     
                     <div className="flex items-start gap-4">
-                      {app.job.company.logo_url ? (
+                      {app.job?.company?.logo_url ? (
                         <img loading="lazy" src={app.job.company.logo_url} className="w-12 h-12 rounded bg-white border border-gray-100 p-1 object-contain" />
                       ) : (
                         <div className="w-12 h-12 rounded bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
@@ -134,7 +134,7 @@ export default function CandidateApplications() {
                           </Link>
                         </h3>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-600">
-                          <span className="font-medium">{app.job.company.name}</span>
+                          <span className="font-medium">{app.job?.company?.name || 'Company'}</span>
                           {app.job.location?.name && (
                             <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{app.job.location.name}</span>
                           )}

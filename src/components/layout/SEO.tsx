@@ -11,8 +11,15 @@ interface SEOProps {
 }
 
 export default function SEO({ title, description, canonicalUrl, type = 'website', imageUrl, schema }: SEOProps) {
-  const siteUrl = 'https://fresherfirst.com'; // Replace with actual domain if known
-  const currentUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
+  const getSiteUrl = () => {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      return window.location.origin;
+    }
+    return 'https://fresher-first.vercel.app';
+  };
+
+  const siteUrl = getSiteUrl();
+  const currentUrl = canonicalUrl ? `${siteUrl}${canonicalUrl.startsWith('/') ? '' : '/'}${canonicalUrl}` : siteUrl;
   const defaultImage = `${siteUrl}/og-image.jpg`;
 
   return (
@@ -35,10 +42,10 @@ export default function SEO({ title, description, canonicalUrl, type = 'website'
       <meta property="twitter:description" content={description} />
       <meta property="twitter:image" content={imageUrl || defaultImage} />
 
-      {/* Structured Data (Schema.org) */}
+      {/* Structured Data (Schema.org / Google Jobs JSON-LD) */}
       {schema && (
         <script type="application/ld+json">
-          {JSON.stringify(schema)}
+          {JSON.stringify(schema, null, 2)}
         </script>
       )}
     </Helmet>

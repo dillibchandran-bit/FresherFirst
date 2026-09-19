@@ -5,6 +5,8 @@ import { JobWithDetails, Resume } from '../../types';
 import { MapPin, Briefcase, IndianRupee, Clock, CheckCircle2, GraduationCap, Building2, Flag, AlertCircle, ArrowLeft, X, FileText, Loader2, ShieldCheck, Award, History, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../../contexts/AuthContext';
+import SEO from '../../components/layout/SEO';
+import { generateGoogleJobsSchema } from '../../lib/googleJobsSchema';
 
 export default function JobDetails() {
   const { slug } = useParams<{ slug: string }>();
@@ -169,45 +171,28 @@ export default function JobDetails() {
   };
 
   
-  const jobSchema = job ? {
-    "@context": "https://schema.org/",
-    "@type": "JobPosting",
-    "title": job.title,
-    "description": job.description,
-    "identifier": {
-      "@type": "PropertyValue",
-      "name": job.company?.name || "Unknown Company",
-      "value": job.id
-    },
-    "datePosted": job.posted_at,
-    "validThrough": new Date(new Date(job.posted_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    "employmentType": job.work_mode === 'remote' ? 'TELECOMMUTE' : 'FULL_TIME',
-    "hiringOrganization": {
-      "@type": "Organization",
-      "name": job.company?.name || "Unknown Company",
-      "sameAs": job.company?.website || ""
-    },
-    "jobLocation": {
-      "@type": "Place",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": job.location?.name || "India",
-        "addressCountry": "IN"
-      }
-    },
-    ...(job.salary_min && job.salary_max ? {
-      "baseSalary": {
-        "@type": "MonetaryAmount",
-        "currency": "INR",
-        "value": {
-          "@type": "QuantitativeValue",
-          "minValue": job.salary_min,
-          "maxValue": job.salary_max,
-          "unitText": "YEAR"
-        }
-      }
-    } : {})
-  } : undefined;
+  const jobSchema = job ? generateGoogleJobsSchema({
+    id: job.id,
+    title: job.title,
+    description: job.description,
+    responsibilities: job.responsibilities,
+    requirements: job.requirements,
+    skills: (job as any).skills_list,
+    education: job.education_requirements,
+    experienceMin: job.experience_min,
+    experienceMax: job.experience_max,
+    companyName: job.company?.name || 'Company',
+    companyWebsite: job.company?.website,
+    companyLogoUrl: job.company?.logo_url || undefined,
+    locationName: job.location?.name,
+    workMode: job.work_mode,
+    jobType: job.job_type,
+    salaryMin: job.salary_min,
+    salaryMax: job.salary_max,
+    salaryPeriod: job.salary_period,
+    datePosted: job.posted_at || undefined,
+    validThrough: job.expires_at || job.deadline || undefined,
+  }) : undefined;
 
   const breadcrumbs = job ? (
     <nav className="flex items-center text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
@@ -252,6 +237,14 @@ export default function JobDetails() {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">
+      <SEO
+        title={`${job.title} at ${job.company?.name || 'Company'} | FresherFirst`}
+        description={job.description ? job.description.slice(0, 155) : `Apply for ${job.title} at ${job.company?.name}`}
+        canonicalUrl={`/jobs/${job.slug}`}
+        type="job"
+        imageUrl={job.company?.logo_url || undefined}
+        schema={jobSchema}
+      />
       {/* Hero Header */}
       <div className="bg-white border-b border-gray-200 py-10 px-4">
         <div className="max-w-7xl mx-auto">
@@ -261,8 +254,8 @@ export default function JobDetails() {
           
           <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between">
             <div className="flex gap-6 items-start">
-              {job.company.logo_url ? (
-                <img loading="lazy" src={job.company.logo_url} alt={job.company.name} className="w-20 h-20 rounded-xl object-contain bg-white border border-gray-100 shadow-sm p-1" />
+              {job.company?.logo_url ? (
+                <img loading="lazy" src={job.company.logo_url} alt={job.company?.name || 'Company'} className="w-20 h-20 rounded-xl object-contain bg-white border border-gray-100 shadow-sm p-1" />
               ) : (
                 <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center border border-gray-200 flex-shrink-0">
                   <Building2 className="w-8 h-8 text-gray-400" />
@@ -273,8 +266,8 @@ export default function JobDetails() {
                 <h1 className="text-3xl font-bold text-gray-900 leading-tight">{job.title}</h1>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-gray-600">
                   <span className="font-medium text-lg flex items-center gap-1 text-gray-900">
-                    {job.company.name}
-                    {job.company.verification_status === 'verified' && <span title="Verified Company"><CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" /></span>}
+                    {job.company?.name || 'Company'}
+                    {job.company?.verification_status === 'verified' && <span title="Verified Company"><CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" /></span>}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-gray-400" />
@@ -423,16 +416,18 @@ export default function JobDetails() {
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-4 pb-4 border-b border-gray-100">About the Company</h3>
             <div className="flex items-center gap-3 mb-3">
-              {job.company.logo_url && <img loading="lazy" src={job.company.logo_url} className="w-10 h-10 rounded border" />}
+              {job.company?.logo_url && <img loading="lazy" src={job.company.logo_url} className="w-10 h-10 rounded border object-contain p-0.5" />}
               <div>
                 <div className="font-bold text-gray-900 flex items-center gap-1">
-                  {job.company.name}
-                  {job.company.verification_status === 'verified' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                  {job.company?.name || 'Company'}
+                  {job.company?.verification_status === 'verified' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                 </div>
-                <a href={job.company.website || '#'} target="_blank" rel="noreferrer" className="text-sm text-amber-600 hover:underline">Visit Website</a>
+                {job.company?.website && (
+                  <a href={job.company.website} target="_blank" rel="noreferrer" className="text-sm text-amber-600 hover:underline">Visit Website</a>
+                )}
               </div>
             </div>
-            {job.company.description && (
+            {job.company?.description && (
               <p className="text-sm text-gray-600 line-clamp-4">{job.company.description}</p>
             )}
           </div>

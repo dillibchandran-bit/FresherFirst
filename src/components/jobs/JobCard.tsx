@@ -33,8 +33,8 @@ export default function JobCard({ job }: JobCardProps) {
       )}
       
       <div className="flex items-start gap-4 mb-4">
-        {job.company.logo_url ? (
-          <img loading="lazy" src={job.company.logo_url} alt={job.company.name} className="w-12 h-12 rounded-lg object-contain bg-gray-50 border border-gray-100 p-1" />
+        {job.company?.logo_url ? (
+          <img loading="lazy" src={job.company.logo_url} alt={job.company.name || 'Company'} className="w-12 h-12 rounded-lg object-contain bg-gray-50 border border-gray-100 p-1" />
         ) : (
           <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200 flex-shrink-0">
             <Briefcase className="w-6 h-6 text-gray-400" />
@@ -48,8 +48,8 @@ export default function JobCard({ job }: JobCardProps) {
             </h3>
           </Link>
           <div className="flex items-center mt-1 text-gray-600 text-sm">
-            <span className="font-medium truncate">{job.company.name}</span>
-            {job.company.verification_status === 'verified' && (
+            <span className="font-medium truncate">{job.company?.name || 'Company'}</span>
+            {job.company?.verification_status === 'verified' && (
               <span title="Verified Company"><CheckCircle2 className="w-4 h-4 text-green-500 ml-1 flex-shrink-0" /></span>
             )}
           </div>

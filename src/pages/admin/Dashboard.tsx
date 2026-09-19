@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Shield, Users, Building2, Briefcase, Flag, Activity, Settings, AlertCircle, CheckCircle2, Search, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Shield, Users, Building2, Briefcase, Flag, Activity, Settings, AlertCircle, CheckCircle2, Search, LogOut, Plus, ExternalLink, Trash2, Eye } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -144,6 +144,14 @@ export default function AdminDashboard() {
     fetchMetrics();
   };
 
+  const handleDeleteJob = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete job "${title}"?`)) return;
+    await supabase.from('jobs').delete().eq('id', id);
+    logAdminAction('deleted_job', 'job', id);
+    fetchJobs();
+    fetchMetrics();
+  };
+
   const handleToggleProfileStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
     await supabase.from('profiles').update({ status: newStatus } as any).eq('id', id);
@@ -204,6 +212,15 @@ export default function AdminDashboard() {
           <p className="text-gray-400 text-sm mt-0.5 hidden md:block">{profile?.full_name}</p>
         </div>
         
+        <div className="px-3 md:px-4 mb-2 hidden md:block">
+          <Link
+            to="/admin/jobs/create"
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-3 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold rounded-lg text-sm shadow-sm transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Post New Job
+          </Link>
+        </div>
+
         <nav className="flex-1 px-3 md:px-4 py-2 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
           {[
             { id: 'overview', icon: Activity, label: 'Overview' },
@@ -279,12 +296,32 @@ export default function AdminDashboard() {
           {/* JOBS */}
           {activeTab === 'jobs' && (
             <div>
-              
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Manage Jobs</h1>
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="text" placeholder="Search jobs..." value={jobSearch} onChange={e => setJobSearch(e.target.value)} className="pl-9 pr-4 py-2 border rounded-lg text-sm" />
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Manage Jobs</h1>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    View, filter, edit statuses, or publish new jobs with Google Jobs Schema.org structured data.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Search jobs or employers..." 
+                      value={jobSearch} 
+                      onChange={e => setJobSearch(e.target.value)} 
+                      className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500" 
+                    />
+                  </div>
+
+                  <Link
+                    to="/admin/jobs/create"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold rounded-lg text-sm shadow-sm transition-colors whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4" /> Post Job for Any Employer
+                  </Link>
                 </div>
               </div>
 
@@ -293,18 +330,164 @@ export default function AdminDashboard() {
                   <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                     <tr>
                       <th className="px-6 py-3">Job Title</th>
-                      <th className="px-6 py-3">Company</th>
+                      <th className="px-6 py-3">Employer</th>
+                      <th className="px-6 py-3">Type & Mode</th>
                       <th className="px-6 py-3">Status</th>
+                      <th className="px-6 py-3">Posted</th>
+                      <th className="px-6 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  
+                  <tbody>
+                    {jobs.filter(j => 
+                      j.title.toLowerCase().includes(jobSearch.toLowerCase()) || 
+                      (j.company?.name && j.company.name.toLowerCase().includes(jobSearch.toLowerCase()))
+                    ).map(job => (
+                      <tr key={job.id} className="border-b hover:bg-gray-50/50">
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          <div className="font-semibold text-gray-900">{job.title}</div>
+                          <div className="text-xs text-gray-400 font-mono mt-0.5 truncate max-w-xs">{job.slug}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            {job.company?.logo_url ? (
+                              <img src={job.company.logo_url} alt="" className="w-6 h-6 rounded object-contain bg-white border p-0.5" />
+                            ) : (
+                              <Building2 className="w-4 h-4 text-gray-400" />
+                            )}
+                            <span className="font-medium text-gray-800">{job.company?.name || 'Unknown'}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-xs font-medium text-gray-700 capitalize">
+                            {(job.job_type || 'full_time').replace('_', ' ')}
+                          </div>
+                          <div className="text-[11px] text-gray-500 capitalize">
+                            {(job.work_mode || 'on_site').replace('_', ' ')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            job.status === 'published' ? 'bg-green-100 text-green-800' :
+                            job.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                            job.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            job.status === 'archived' ? 'bg-gray-100 text-gray-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {(job.status || 'draft').toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-500">
+                          {new Date(job.posted_at || job.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <select 
+                              value={job.status || 'published'} 
+                              onChange={(e) => handleUpdateJobStatus(job.id, e.target.value)}
+                              className="text-xs border border-gray-300 rounded p-1 bg-white"
+                            >
+                              <option value="published">Published</option>
+                              <option value="pending">Pending</option>
+                              <option value="rejected">Rejected</option>
+                              <option value="draft">Draft</option>
+                              <option value="archived">Archived</option>
+                            </select>
+
+                            <a
+                              href={`/jobs/${job.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="View Public Page (with Google Schema)"
+                              className="p-1 text-gray-500 hover:text-amber-600 rounded"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteJob(job.id, job.title)}
+                              title="Delete Job"
+                              className="p-1 text-gray-400 hover:text-red-600 rounded"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {jobs.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500 text-sm">
+                          No jobs found. Click "Post Job for Any Employer" to create one!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* EMPLOYERS */}
+          {activeTab === 'employers' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Manage Employers</h1>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Review and verify companies registered or created on FresherFirst.
+                  </p>
+                </div>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Search companies..." 
+                    value={empSearch} 
+                    onChange={e => setEmpSearch(e.target.value)} 
+                    className="pl-9 pr-4 py-2 border rounded-lg text-sm bg-white" 
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full text-left text-sm text-gray-500">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-6 py-3">Company</th>
+                      <th className="px-6 py-3">Website</th>
+                      <th className="px-6 py-3">Verification Status</th>
+                      <th className="px-6 py-3">Created</th>
                       <th className="px-6 py-3">Actions</th>
                     </tr>
                   </thead>
                   
                   <tbody>
                     {companies.filter(c => c.name.toLowerCase().includes(empSearch.toLowerCase())).map(company => (
-                      <tr key={company.id} className="border-b">
-                        <td className="px-6 py-4 font-medium text-gray-900">{company.name}</td>
+                      <tr key={company.id} className="border-b hover:bg-gray-50/50">
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                          <div className="flex items-center gap-2.5">
+                            {company.logo_url ? (
+                              <img src={company.logo_url} alt="" className="w-7 h-7 rounded object-contain bg-white border p-0.5" />
+                            ) : (
+                              <Building2 className="w-5 h-5 text-gray-400" />
+                            )}
+                            <span className="font-semibold text-gray-900">{company.name}</span>
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          {company.website ? (
+                            <a href={company.website} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                              {company.website.replace(/^https?:\/\//, '')}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                             company.verification_status === 'verified' ? 'bg-green-100 text-green-800' :
                             company.verification_status === 'pending' ? 'bg-amber-100 text-amber-800' :
                             company.verification_status === 'rejected' ? 'bg-red-100 text-red-800' :
@@ -314,12 +497,12 @@ export default function AdminDashboard() {
                             {(company.verification_status || 'unverified').toUpperCase()}
                           </span>
                         </td>
-                        <td className="px-6 py-4">{new Date(company.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-xs text-gray-500">{new Date(company.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
                           <select 
                             value={company.verification_status || 'unverified'} 
                             onChange={(e) => handleUpdateCompanyStatus(company.id, e.target.value)}
-                            className="text-xs border rounded p-1"
+                            className="text-xs border rounded p-1 bg-white"
                           >
                             <option value="unverified">Unverified</option>
                             <option value="pending">Pending</option>
@@ -331,7 +514,6 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-
                 </table>
               </div>
             </div>
