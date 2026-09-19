@@ -22,7 +22,11 @@ export default function ForgotPassword() {
       if (error) throw error;
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset link.');
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError('Unable to connect to Supabase. Please ensure your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are configured in your Vercel project environment variables, or check your connection.');
+      } else {
+        setError(err.message || 'Failed to send reset link.');
+      }
     } finally {
       setLoading(false);
     }
