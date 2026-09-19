@@ -12,21 +12,46 @@ export default function NotificationCenter() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchNotifications();
+    let channel: any = null;
+    let isMounted = true;
 
-    const notifSubscription = supabase
-      .channel('public:notifications')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notifications' },
-        () => {
-          fetchNotifications();
-        }
-      )
-      .subscribe();
+    const setupNotifications = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !isMounted) return;
+
+        await fetchNotifications(user.id);
+
+        // Use a unique channel name per user to prevent duplicate channel collision errors
+        channel = supabase.channel(`notifications-${user.id}-${Math.random().toString(36).substring(2, 7)}`);
+        
+        channel
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+            () => {
+              if (isMounted) fetchNotifications(user.id);
+            }
+          )
+          .subscribe((status: string) => {
+            if (status === 'CHANNEL_ERROR') {
+              console.warn('Notification realtime channel error (non-fatal)');
+            }
+          });
+      } catch (err) {
+        console.warn('Realtime notifications initialization failed gracefully:', err);
+      }
+    };
+
+    setupNotifications();
 
     return () => {
-      supabase.removeChannel(notifSubscription);
+      isMounted = false;
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {}
+      }
     };
   }, []);
 
@@ -40,23 +65,30 @@ export default function NotificationCenter() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (userId?: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      let targetUserId = userId;
+      if (!targetUserId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        targetUserId = user.id;
+      }
 
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) throw error;
+      if (error) {
+        // Table might not exist or error, don't crash
+        return;
+      }
       setNotifications(data || []);
       setUnreadCount(data?.filter((n: any) => !n.is_read).length || 0);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+    } catch {
+      // Graceful fallback
     }
   };
 

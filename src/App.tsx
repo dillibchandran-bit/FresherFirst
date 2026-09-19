@@ -28,19 +28,22 @@ const AdminDashboard = React.lazy(() => import('./pages/admin/Dashboard'));
 import JobList from './pages/jobs/JobList';
 import JobDetails from './pages/jobs/JobDetails';
 
+import ErrorBoundary from './components/common/ErrorBoundary';
+
 // Placeholder components
 const Companies = () => <div className="min-h-screen py-20 text-center"><h1 className="text-3xl font-bold">Companies</h1></div>;
 
 export default function App() {
   return (
-    <HelmetProvider>
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="flex flex-col min-h-screen font-sans">
-          <Navbar />
-          <main className="flex-grow">
-            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Loading...</div>}>
-            <Routes>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <div className="flex flex-col min-h-screen font-sans">
+              <Navbar />
+              <main className="flex-grow">
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Loading...</div>}>
+                <Routes>
               <Route path="/" element={<Home />} />
               
               {/* Auth Routes */}
@@ -138,5 +141,6 @@ export default function App() {
       </BrowserRouter>
     </AuthProvider>
     </HelmetProvider>
+    </ErrorBoundary>
   );
 }
